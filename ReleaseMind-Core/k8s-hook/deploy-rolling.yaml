@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-rolling
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: demo
+      strategy: rolling
+  template:
+    metadata:
+      labels:
+        app: demo
+        strategy: rolling
+    spec:
+      containers:
+      - name: demo
+        image: nginx:1.25
+
+        ports:
+        - containerPort: 80

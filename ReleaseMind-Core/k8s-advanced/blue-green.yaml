@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app-green
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: demo
+      color: green
+  template:
+    metadata:
+      labels:
+        app: demo
+        color: green
+    spec:
+      containers:
+      - name: demo
+        image: demo-app:v2
+        ports:
+        - containerPort: 8080

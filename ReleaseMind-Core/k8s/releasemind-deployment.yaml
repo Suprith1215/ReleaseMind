@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: releasemind-brain
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: releasemind
+  template:
+    metadata:
+      labels:
+        app: releasemind
+    spec:
+      containers:
+      - name: releasemind
+        image: releasemind-brain:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 7000

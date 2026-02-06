@@ -1,0 +1,44 @@
+name: ReleaseMind Controlled Pipeline
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release-decision:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Call ReleaseMind Brain
+        id: decision
+        run: |
+          RESPONSE=$(curl -s -X POST http://127.0.0.1:7000/decide \
+            -H "Content-Type: application/json" \
+            -d '{
+              "change": {"intent": "refactor", "services": ["auth", "order"]},
+              "human": {"experience": "new", "owns_service": false},
+              "environment": {"config_drift": true, "resource_drift": false},
+              "timing": {"peak_hours": true, "weekend": false}
+            }')
+
+          echo "ReleaseMind response: $RESPONSE"
+
+          STRATEGY=$(echo $RESPONSE | jq -r .deployment_strategy)
+          echo "strategy=$STRATEGY" >> $GITHUB_OUTPUT
+
+      - name: Block Deployment if Risky
+        if: steps.decision.outputs.strategy == 'BLOCK'
+        run: |
+          echo "❌ Release blocked by ReleaseMind"
+          exit 1
+
+      - name: Canary Deployment
+        if: steps.decision.outputs.strategy == 'CANARY'
+        run: echo "🟡 Canary deployment selected"
+
+      - name: Blue-Green Deployment
+        if: steps.decision.outputs.strategy == 'BLUE_GREEN'
+        run: echo "🔵🟢 Blue-Green deployment selected"
+
+      - name: Fast Deployment
+        if: steps.decision.outputs.strategy == 'FAST'
+        run: echo "⚡ Fast deployment selected"

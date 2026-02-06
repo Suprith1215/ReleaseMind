@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ReleaseMind – AI-Powered Release Governance</title>
+  <link rel="stylesheet" href="/static/style.css">
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js for Charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <!-- Three.js for 3D Graphics -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  
+  <!-- Font Awesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+  <!-- 3D Background Canvas -->
+  <canvas id="bg-canvas"></canvas>
+  
+  <!-- Main Container -->
+  <div class="container">
+    
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <i class="fas fa-brain"></i>
+        <h1>ReleaseMind</h1>
+      </div>
+      <div class="subtitle">AI-Powered Release Governance & Risk Analysis</div>
+    </header>
+
+    <!-- Dashboard Grid -->
+    <div class="dashboard-grid">
+      
+      <!-- Left Panel: Controls -->
+      <div class="card control-panel">
+        <div class="card-header">
+          <i class="fas fa-sliders-h"></i>
+          <h2>Deployment Configuration</h2>
+        </div>
+        
+        <div class="form-group">
+          <label for="intent">
+            <i class="fas fa-code-branch"></i>
+            Change Intent
+          </label>
+          <select id="intent" class="input-field">
+            <option value="hotfix">🔥 Hotfix (Critical)</option>
+            <option value="feature">✨ Feature (New)</option>
+            <option value="refactor" selected>🔧 Refactor (Optimization)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="service">
+            <i class="fas fa-server"></i>
+            Target Service
+          </label>
+          <select id="service" class="input-field">
+            <option value="auth">🔐 Authentication Service</option>
+            <option value="order">📦 Order Service</option>
+            <option value="payment">💳 Payment Service</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="experience">
+            <i class="fas fa-user"></i>
+            Contributor Experience
+          </label>
+          <select id="experience" class="input-field">
+            <option value="new">👶 New (0-1 years)</option>
+            <option value="senior">🧑‍💼 Senior (2+ years)</option>
+          </select>
+        </div>
+
+        <div class="checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="config_drift">
+            <span class="checkmark"></span>
+            <span class="checkbox-text">
+              <i class="fas fa-exclamation-triangle"></i>
+              Configuration Drift Detected
+            </span>
+          </label>
+
+          <label class="checkbox-label">
+            <input type="checkbox" id="peak_hours">
+            <span class="checkmark"></span>
+            <span class="checkbox-text">
+              <i class="fas fa-clock"></i>
+              Peak Traffic Hours
+            </span>
+          </label>
+        </div>
+
+        <button class="btn-primary" onclick="simulate()">
+          <i class="fas fa-rocket"></i>
+          Analyze Deployment Risk
+        </button>
+      </div>
+
+      <!-- Center Panel: Risk Visualization -->
+      <div class="card risk-panel">
+        <div class="card-header">
+          <i class="fas fa-shield-alt"></i>
+          <h2>Risk Assessment</h2>
+        </div>
+        
+        <div id="output" class="risk-output">
+          <div class="placeholder-state">
+            <i class="fas fa-chart-line"></i>
+            <p>Run a simulation to see risk analysis</p>
+          </div>
+        </div>
+
+        <!-- Risk Gauge -->
+        <div class="gauge-container">
+          <canvas id="riskGauge"></canvas>
+          <div class="gauge-label">Risk Score</div>
+        </div>
+
+        <!-- Risk Factors Breakdown -->
+        <div class="risk-factors" id="riskFactors">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Right Panel: Charts -->
+      <div class="card charts-panel">
+        <div class="card-header">
+          <i class="fas fa-chart-bar"></i>
+          <h2>Analytics Dashboard</h2>
+        </div>
+        
+        <div class="chart-container">
+          <h3>Risk Distribution</h3>
+          <canvas id="riskDistributionChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+          <h3>Deployment Strategies</h3>
+          <canvas id="strategyChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+          <h3>Risk Trend Over Time</h3>
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- History Table -->
+    <div class="card history-card">
+      <div class="card-header">
+        <i class="fas fa-history"></i>
+        <h2>Decision History</h2>
+      </div>
+      
+      <div class="table-container">
+        <table id="history-table">
+          <thead>
+            <tr>
+              <th><i class="fas fa-clock"></i> Timestamp</th>
+              <th><i class="fas fa-shield-alt"></i> Strategy</th>
+              <th><i class="fas fa-exclamation-circle"></i> Risk Score</th>
+              <th><i class="fas fa-server"></i> Impacted Services</th>
+              <th><i class="fas fa-user"></i> Experience</th>
+              <th><i class="fas fa-chart-line"></i> Impact Level</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Footer Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <i class="fas fa-check-circle"></i>
+        <div class="stat-value" id="totalDeployments">0</div>
+        <div class="stat-label">Total Analyses</div>
+      </div>
+      <div class="stat-card">
+        <i class="fas fa-ban"></i>
+        <div class="stat-value" id="blockedDeployments">0</div>
+        <div class="stat-label">Blocked</div>
+      </div>
+      <div class="stat-card">
+        <i class="fas fa-play-circle"></i>
+        <div class="stat-value" id="allowedDeployments">0</div>
+        <div class="stat-label">Allowed</div>
+      </div>
+      <div class="stat-card">
+        <i class="fas fa-chart-line"></i>
+        <div class="stat-value" id="avgRisk">0</div>
+        <div class="stat-label">Avg Risk Score</div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+name: ReleaseMind Governance Check
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release-governance:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Simulate metadata extraction (REAL CI concept)
+      - name: Set deployment context
+        run: |
+          echo "INTENT=feature" >> $GITHUB_ENV
+          echo "SERVICE=order" >> $GITHUB_ENV
+          echo "EXPERIENCE=senior" >> $GITHUB_ENV
+          echo "OWNS_SERVICE=true" >> $GITHUB_ENV
+
+      - name: Ask ReleaseMind for decision
+        run: |
+          RESPONSE=$(curl -s -X POST http://localhost:7000/decide \
+          -H "Content-Type: application/json" \
+          -d "{
+            \"change\": {
+              \"intent\": \"${INTENT}\",
+              \"services\": [\"${SERVICE}\"]
+            },
+            \"human\": {
+              \"experience\": \"${EXPERIENCE}\",
+              \"owns_service\": ${OWNS_SERVICE}
+            },
+            \"environment\": {
+              \"config_drift\": false,
+              \"resource_drift\": false
+            },
+            \"timing\": {
+              \"peak_hours\": false,
+              \"weekend\": false
+            }
+          }")
+
+          echo "ReleaseMind response:"
+          echo "$RESPONSE"
+
+          STRATEGY=$(echo "$RESPONSE" | jq -r '.deployment_strategy')
+
+          if [ "$STRATEGY" = "BLOCK" ]; then
+            echo "❌ Deployment BLOCKED by ReleaseMind"
+            exit 1
+          fi
+
+          echo "✅ Deployment allowed: $STRATEGY"
+
+      - name: Deploy application
+        run: echo "🚀 Deploying application..."

@@ -1,0 +1,18 @@
+{
+  "change": {
+    "intent": "feature",
+    "services": ["order"]
+  },
+  "human": {
+    "experience": "senior",
+    "owns_service": true
+  },
+  "environment": {
+    "config_drift": false,
+    "resource_drift": false
+  },
+  "timing": {
+    "peak_hours": false,
+    "weekend": false
+  }
+}

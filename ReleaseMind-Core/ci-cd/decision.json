@@ -1,0 +1,1 @@
+{"deployment_strategy":"BLOCK","dry_run":{"impact_level":"HIGH","impacted_services":["order","payment","auth"]},"risk_score":17}
