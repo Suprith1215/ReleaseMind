@@ -1,0 +1,19 @@
+{
+    "auth": [
+        "order",
+        "payment"
+    ],
+    "order": [
+        "payment",
+        "notification"
+    ],
+    "payment": [],
+    "gateway": [
+        "auth",
+        "order"
+    ],
+    "notification": [
+        "order"
+    ],
+    "unknown": []
+}

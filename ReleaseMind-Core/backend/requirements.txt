@@ -1,0 +1,6 @@
+flask==3.0.3
+flask-cors==4.0.1
+requests==2.32.3
+pyyaml==6.0.2
+networkx==3.3
+psutil==6.1.1

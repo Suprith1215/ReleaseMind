@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  releasemind:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: releasemind:latest
+    container_name: releasemind
+    ports:
+      - "7000:7000"
+    environment:
+      - PORT=7000
+      - DEBUG=false
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-} # set in .env or CI env
+    volumes:
+      # Persist SQLite database across container restarts
+      - releasemind_db:/app/backend/database
+      # Hot-reload config without rebuilding image
+      - ./backend/config/risk_config.yaml:/app/backend/config/risk_config.yaml:ro
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:7000/" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  releasemind_db:
+    driver: local

@@ -1,0 +1,67 @@
+# ============================================================
+#  ReleaseMind — Dynamic Risk Engine Configuration
+#  Tune weights here. No code changes needed.
+# ============================================================
+
+weights:
+  # Code size factors
+  files_changed_per_file: 0.20          # Risk added per changed file
+  lines_added_per_100: 0.50             # Risk added per 100 lines added
+  lines_deleted_per_100: 0.10           # Lines deleted are lower risk
+
+  # Historical learning factors
+  failure_rate_multiplier: 3.0          # Amplifier for service failure rate
+  recent_failure_window: 10             # How many past deployments to consider
+
+  # Dependency graph factors
+  dependency_depth_weight: 1.50         # Risk per level of dependency depth
+  blast_radius_weight: 0.30             # Risk per impacted service
+
+  # Environment factors
+  config_drift_penalty: 4.0             # Flat penalty when config drift detected
+  resource_drift_penalty: 3.0           # Flat penalty when resource drift detected
+
+  # Infrastructure metrics factors
+  cpu_threshold: 75.0                   # CPU % above which risk is added
+  memory_threshold: 80.0                # Memory % above which risk is added
+  cpu_risk_per_percent_above: 0.10      # Risk added per % CPU above threshold
+  memory_risk_per_percent_above: 0.08   # Risk added per % Memory above threshold
+
+  # Developer factors
+  new_developer_penalty: 3.0            # Flat penalty for new developer (< 1yr)
+  not_service_owner_penalty: 2.0        # Flat penalty if not the service owner
+
+  # Timing factors
+  peak_hours_penalty: 2.0               # Risk added during peak traffic hours
+  weekend_penalty: 1.0                  # Risk added on weekends
+
+# Commit intent base risk scores
+intent_base_risk:
+  hotfix: 2
+  feature: 4
+  refactor: 6
+  experiment: 7
+  breaking_change: 9
+  unknown: 3
+
+# Strategy thresholds
+strategy_thresholds:
+  block_above: 20
+  canary_above: 14
+  blue_green_above: 8
+  rolling_below: 8
+
+# GitHub API settings
+github:
+  base_url: "https://api.github.com"
+  commits_per_page: 10                  # How many commits to analyze
+  pr_per_page: 5                        # How many PRs to analyze
+
+# Service → file prefix mapping (used by GitHub Analyzer)
+service_prefix_map:
+  auth: ["auth-service", "auth/", "services/auth"]
+  order: ["order-service", "order/", "services/order"]
+  payment: ["payment-service", "payment/", "services/payment"]
+  gateway: ["gateway/", "services/gateway", "api-gateway"]
+  notification: ["notification/", "services/notification"]
+  default: "unknown"

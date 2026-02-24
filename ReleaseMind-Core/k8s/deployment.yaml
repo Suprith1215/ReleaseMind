@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: releasemind
+  namespace: default
+  labels:
+    app: releasemind
+    version: v2
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: releasemind
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: releasemind
+        version: v2
+    spec:
+      containers:
+        - name: releasemind
+          image: releasemind:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 7000
+          env:
+            - name: PORT
+              value: "7000"
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: releasemind-secrets
+                  key: github-token
+                  optional: true
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 7000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 7000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            - name: db-storage
+              mountPath: /app/backend/database
+            - name: risk-config
+              mountPath: /app/backend/config/risk_config.yaml
+              subPath: risk_config.yaml
+              readOnly: true
+      volumes:
+        - name: db-storage
+          persistentVolumeClaim:
+            claimName: releasemind-pvc
+        - name: risk-config
+          configMap:
+            name: releasemind-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: releasemind-svc
+  namespace: default
+spec:
+  selector:
+    app: releasemind
+  ports:
+    - name: http
+      port: 80
+      targetPort: 7000
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: releasemind-pvc
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: releasemind-secrets
+  namespace: default
+type: Opaque
+stringData:
+  github-token: ""           # Fill in: kubectl edit secret releasemind-secrets

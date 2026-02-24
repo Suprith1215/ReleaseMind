@@ -1,6 +1,14 @@
 # Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
 
 # Logs
 logs/
@@ -18,3 +26,14 @@ Thumbs.db
 
 # VS Code
 .vscode/
+
+# SQLite databases (runtime data — not for version control)
+*.db
+*.sqlite
+*.sqlite3
+
+# Temp files
+git_status.txt
+curl
+cd
+Microsoft
