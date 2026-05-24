@@ -25,11 +25,11 @@ COMMITS_PER_PAGE = _github_cfg.get("commits_per_page", 10)
 # Internal helpers
 # ---------------------------------------------------------------------------
 
-def _headers() -> dict:
-    token = os.environ.get("GITHUB_TOKEN", "")
+def _headers(override_token: str = "") -> dict:
+    token = override_token or os.getenv("GITHUB_TOKEN", "")
     h = {"Accept": "application/vnd.github+json"}
     if token:
-        h["Authorization"] = f"Bearer {token}"
+        h["Authorization"] = f"token {token}"
     return h
 
 
@@ -66,12 +66,12 @@ def _classify_commit_intent(message: str) -> str:
     return "unknown"
 
 
-def _author_commit_frequency(owner: str, repo: str, author: str) -> int:
+def _author_commit_frequency(owner: str, repo: str, author: str, token: str = "") -> int:
     """Count how many recent commits the author has on main branch."""
     try:
         url = f"{BASE_URL}/repos/{owner}/{repo}/commits"
         params = {"author": author, "per_page": 30}
-        resp = requests.get(url, headers=_headers(), params=params, timeout=10)
+        resp = requests.get(url, headers=_headers(token), params=params, timeout=10)
         if resp.status_code == 200:
             return len(resp.json())
     except Exception:
@@ -122,8 +122,7 @@ def analyze_repo(
         }
     """
 
-    if github_token:
-        os.environ["GITHUB_TOKEN"] = github_token
+    token = github_token or os.getenv("GITHUB_TOKEN", "")
 
     result = {
         "files_changed": 0,
@@ -144,7 +143,7 @@ def analyze_repo(
         # ---- 1. Fetch latest commit on branch ----
         commits_url = f"{BASE_URL}/repos/{owner}/{repo}/commits"
         params = {"sha": branch, "per_page": 1}
-        resp = requests.get(commits_url, headers=_headers(), params=params, timeout=10)
+        resp = requests.get(commits_url, headers=_headers(token), params=params, timeout=10)
 
         if resp.status_code == 401:
             result["error"] = "GitHub token missing or invalid."
@@ -177,7 +176,7 @@ def analyze_repo(
 
         # ---- 2. Fetch commit detail (files changed) ----
         detail_url = f"{BASE_URL}/repos/{owner}/{repo}/commits/{sha}"
-        detail_resp = requests.get(detail_url, headers=_headers(), timeout=10)
+        detail_resp = requests.get(detail_url, headers=_headers(token), timeout=10)
 
         if detail_resp.status_code == 200:
             detail = detail_resp.json()
@@ -197,13 +196,13 @@ def analyze_repo(
             result["affected_services"] = list(services_hit) or ["unknown"]
 
         # ---- 3. Developer commit frequency ----
-        freq = _author_commit_frequency(owner, repo, author)
+        freq = _author_commit_frequency(owner, repo, author, token)
         result["commit_frequency"] = freq
         result["developer_experience_score"] = _developer_experience_score(freq)
 
         # ---- 4. Open PRs ----
         pr_url = f"{BASE_URL}/repos/{owner}/{repo}/pulls"
-        pr_resp = requests.get(pr_url, headers=_headers(),
+        pr_resp = requests.get(pr_url, headers=_headers(token),
                                params={"state": "open", "per_page": 5},
                                timeout=10)
         if pr_resp.status_code == 200:
