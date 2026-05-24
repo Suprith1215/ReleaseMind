@@ -22,12 +22,11 @@ from metrics_collector import get_system_metrics, compute_metric_risk
 from github_analyzer   import analyze_repo
 import db
 
-# ── new service imports ────────────────────────────────────────────────────
-_SERVICES_DIR = os.path.join(os.path.dirname(__file__), "services")
-sys.path.insert(0, _SERVICES_DIR)
-
-from learning_engine    import get_similar_failure_rate, get_service_trend
-from remediation_engine import generate_recommendations
+# ── service sub-package imports ─────────────────────────────────────────────
+from services.learning_engine    import get_similar_failure_rate, get_service_trend
+from services.remediation_engine import generate_recommendations
+from simulate_pipeline  import run_pipeline
+from simulate_deploy    import deploy as simulate_deploy_strategy
 
 # ── Flask app ───────────────────────────────────────────────────────────────
 app = Flask(
@@ -333,10 +332,78 @@ def config_reload():
 
 
 # ===========================================================================
+#  /pipeline  — CI Pipeline Simulation (replaces pipeline.bat)
+# ===========================================================================
+@app.route("/pipeline", methods=["POST"])
+def pipeline():
+    """
+    Run a simulated CI pipeline.
+
+    Body (all optional):
+      repo           str   — repository name
+      branch         str   — branch being built
+      service        str   — primary service
+      files_changed  int   — number of changed files
+      risk_score     float — risk score for security stage tuning
+    """
+    payload       = request.json or {}
+    repo          = payload.get("repo",          "unknown")
+    branch        = payload.get("branch",        "main")
+    service       = payload.get("service",       "app")
+    files_changed = int(payload.get("files_changed", 0))
+    risk_score    = float(payload.get("risk_score",   0.0))
+
+    result = run_pipeline(
+        repo=repo,
+        branch=branch,
+        service=service,
+        files_changed=files_changed,
+        risk_score=risk_score,
+    )
+    status_code = 200 if result["status"] != "failed" else 422
+    return jsonify(result), status_code
+
+
+# ===========================================================================
+#  /deploy-sim  — Deployment Strategy Simulation (replaces deploy.bat)
+# ===========================================================================
+@app.route("/deploy-sim", methods=["POST"])
+def deploy_sim():
+    """
+    Simulate a deployment using a given strategy.
+
+    Body:
+      strategy       str  — ROLLING | BLUE_GREEN | CANARY | BLOCK (required)
+      service        str  — service name
+      deployment_id  int  — existing DB deployment ID (optional)
+      block_reason   str  — reason shown when strategy=BLOCK
+    """
+    payload       = request.json or {}
+    strategy      = payload.get("strategy", "").upper()
+    service       = payload.get("service",  "app")
+    dep_id        = payload.get("deployment_id")
+    block_reason  = payload.get("block_reason", "High risk score")
+
+    if strategy not in ("ROLLING", "BLUE_GREEN", "CANARY", "BLOCK"):
+        return jsonify({
+            "error": "'strategy' must be one of: ROLLING, BLUE_GREEN, CANARY, BLOCK"
+        }), 400
+
+    result = simulate_deploy_strategy(
+        strategy=strategy,
+        service=service,
+        deployment_id=dep_id,
+        block_reason=block_reason,
+    )
+    status_code = 200 if result["status"] != "blocked" else 422
+    return jsonify(result), status_code
+
+
+# ===========================================================================
 #  APP START
 # ===========================================================================
 if __name__ == "__main__":
     port  = int(os.environ.get("PORT", 7000))
     debug = os.environ.get("DEBUG", "false").lower() == "true"
-    print(f"\n🧠 ReleaseMind AI Governance Engine starting on http://0.0.0.0:{port}\n")
+    print(f"\n[ReleaseMind] AI Governance Engine starting on http://0.0.0.0:{port}\n")
     app.run(host="0.0.0.0", port=port, debug=debug)
